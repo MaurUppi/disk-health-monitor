@@ -1,0 +1,224 @@
+smartctl -a /dev/nvme5n1
+smartctl 7.4 2023-08-01 r5530 [x86_64-linux-6.6.44-production+truenas] (local build)
+Copyright (C) 2002-23, Bruce Allen, Christian Franke, www.smartmontools.org
+
+=== START OF INFORMATION SECTION ===
+Model Number:                       INTEL SSDPF2KX038TZ
+Serial Number:                      BTAC112203R43P8AGN
+Firmware Version:                   JCV10300
+PCI Vendor/Subsystem ID:            0x8086
+IEEE OUI Identifier:                0x5cd2e4
+Total NVM Capacity:                 3,840,755,982,336 [3.84 TB]
+Unallocated NVM Capacity:           0
+Controller ID:                      0
+NVMe Version:                       1.3
+Number of Namespaces:               128
+Namespace 1 Size/Capacity:          3,840,755,982,336 [3.84 TB]
+Namespace 1 Formatted LBA Size:     512
+Namespace 1 IEEE EUI-64:            5cd2e4 6895450400
+Local Time is:                      Mon Mar  3 17:22:24 2025 CST
+Firmware Updates (0x18):            4 Slots, no Reset required
+Optional Admin Commands (0x003e):   Format Frmw_DL NS_Mngmt Self_Test Directvs
+Optional NVM Commands (0x004e):     Wr_Unc DS_Mngmt Wr_Zero Timestmp
+Log Page Attributes (0x1e):         Cmd_Eff_Lg Ext_Get_Lg Telmtry_Lg Pers_Ev_Lg
+Maximum Data Transfer Size:         32 Pages
+Warning  Comp. Temp. Threshold:     70 Celsius
+Critical Comp. Temp. Threshold:     80 Celsius
+
+Supported Power States
+St Op     Max   Active     Idle   RL RT WL WT  Ent_Lat  Ex_Lat
+ 0 +    25.00W       -        -    0  0  0  0        0       0
+ 1 +    12.00W       -        -    0  0  0  0        0       0
+ 2 +    10.00W       -        -    0  0  0  0        0       0
+
+Supported LBA Sizes (NSID 0x1)
+Id Fmt  Data  Metadt  Rel_Perf
+ 0 +     512       0         2
+ 1 -     512       8         2
+ 2 -    4096       0         2
+ 3 -    4096       8         2
+ 4 -    4096      64         2
+
+=== START OF SMART DATA SECTION ===
+SMART overall-health self-assessment test result: PASSED
+
+SMART/Health Information (NVMe Log 0x02)
+Critical Warning:                   0x00
+Temperature:                        42 Celsius
+Available Spare:                    100%
+Available Spare Threshold:          10%
+Percentage Used:                    0%
+Data Units Read:                    10,970,743 [5.61 TB]
+Data Units Written:                 6,402,614 [3.27 TB]
+Host Read Commands:                 1,265,944,386
+Host Write Commands:                738,303,902
+Controller Busy Time:               22
+Power Cycles:                       219
+Power On Hours:                     20,662
+Unsafe Shutdowns:                   157
+Media and Data Integrity Errors:    0
+Error Information Log Entries:      0
+Warning  Comp. Temperature Time:    0
+Critical Comp. Temperature Time:    0
+
+Error Information (NVMe Log 0x01, 16 of 64 entries)
+No Errors Logged
+
+Self-test Log (NVMe Log 0x06)
+Self-test status: No self-test in progress
+No Self-tests Logged
+
+
+
+-------------------------------------------
+smartctl -a /dev/sdd
+smartctl 7.4 2023-08-01 r5530 [x86_64-linux-6.6.44-production+truenas] (local build)
+Copyright (C) 2002-23, Bruce Allen, Christian Franke, www.smartmontools.org
+
+=== START OF INFORMATION SECTION ===
+Vendor:               SEAGATE
+Product:              ST600MM0006
+Revision:             LS06
+Compliance:           SPC-4
+User Capacity:        600,127,266,816 bytes [600 GB]
+Logical block size:   512 bytes
+LU is fully provisioned
+Rotation Rate:        10000 rpm
+Form Factor:          2.5 inches
+Logical Unit id:      0x5000c5005ecda03b
+Serial number:        S0M02L2J
+Device type:          disk
+Transport protocol:   SAS (SPL-4)
+Local Time is:        Mon Mar  3 17:22:56 2025 CST
+SMART support is:     Available - device has SMART capability.
+SMART support is:     Enabled
+Temperature Warning:  Disabled or Not Supported
+
+=== START OF READ SMART DATA SECTION ===
+SMART Health Status: OK
+
+Current Drive Temperature:     37 C
+Drive Trip Temperature:        68 C
+
+Accumulated power on time, hours:minutes 36491:23
+Manufactured in week  of year 20
+Specified cycle count over device lifetime:  10000
+Accumulated start-stop cycles:  276
+Specified load-unload count over device lifetime:  300000
+Accumulated load-unload cycles:  2224
+Elements in grown defect list: 0
+
+Vendor (Seagate Cache) information
+  Blocks sent to initiator = 1951700807
+  Blocks received from initiator = 269378791
+  Blocks read from cache and sent to initiator = 4269399299
+  Number of read and write commands whose size <= segment size = 236131418
+  Number of read and write commands whose size > segment size = 2014701
+
+Vendor (Seagate/Hitachi) factory information
+  number of hours powered up = 36491.38
+  number of minutes until next internal SMART test = 24
+
+Error counter log:
+           Errors Corrected by           Total   Correction     Gigabytes    Total
+               ECC          rereads/    errors   algorithm      processed    uncorrected
+           fast | delayed   rewrites  corrected  invocations   [10^9 bytes]  errors
+read:   3095384993       13         0  3095385006         13     280210.005           0
+write:         0        0        22        22         24     183549.238           0
+verify: 2031052729        0         0  2031052729          1      37272.521           1
+
+Non-medium error count:      157
+
+SMART Self-test log
+Num  Test              Status                 segment  LifeTime  LBA_first_err [SK ASC ASQ]
+     Description                              number   (hours)
+# 1  Background short  Completed                  48   36450                 - [-   -    -]
+# 2  Background short  Completed                  48   36282                 - [-   -    -]
+# 3  Background short  Completed                  48   36162                 - [-   -    -]
+# 4  Background short  Completed                  48   36138                 - [-   -    -]
+# 5  Background short  Completed                  48   36114                 - [-   -    -]
+
+Long (extended) Self-test duration: 3777 seconds [63.0 minutes]
+
+
+-----------------------------------------------
+
+smartctl -a /dev/sde
+smartctl 7.4 2023-08-01 r5530 [x86_64-linux-6.6.44-production+truenas] (local build)
+Copyright (C) 2002-23, Bruce Allen, Christian Franke, www.smartmontools.org
+
+=== START OF INFORMATION SECTION ===
+Vendor:               SAMSUNG
+Product:              MZILT3T8HALS/007
+Revision:             GXF4
+Compliance:           SPC-5
+User Capacity:        3,840,755,982,336 bytes [3.84 TB]
+Logical block size:   512 bytes
+Physical block size:  4096 bytes
+Formatted with type 2 protection
+8 bytes of protection information per logical block
+LU is resource provisioned, LBPRZ=1
+Rotation Rate:        Solid State Device
+Form Factor:          2.5 inches
+Logical Unit id:      0x5002538b20949600
+Serial number:        S49PNY0N900063
+Device type:          disk
+Transport protocol:   SAS (SPL-4)
+Local Time is:        Mon Mar  3 17:23:57 2025 CST
+SMART support is:     Available - device has SMART capability.
+SMART support is:     Enabled
+Temperature Warning:  Enabled
+
+=== START OF READ SMART DATA SECTION ===
+SMART Health Status: OK
+
+Percentage used endurance indicator: 0%
+Current Drive Temperature:     39 C
+Drive Trip Temperature:        70 C
+
+Accumulated power on time, hours:minutes 23002:02
+Manufactured in week 38 of year 2020
+Accumulated start-stop cycles:  122
+Specified load-unload count over device lifetime:  0
+Accumulated load-unload cycles:  0
+Elements in grown defect list: 0
+
+Error counter log:
+           Errors Corrected by           Total   Correction     Gigabytes    Total
+               ECC          rereads/    errors   algorithm      processed    uncorrected
+           fast | delayed   rewrites  corrected  invocations   [10^9 bytes]  errors
+read:          0        0         0         0          0      71532.573           0
+write:         0        0         0         0          0      16924.206           0
+verify:        0        0         0         0          0         85.043           0
+
+Non-medium error count:     1221
+
+  Pending defect count:0 Pending Defects
+SMART Self-test log
+Num  Test              Status                 segment  LifeTime  LBA_first_err [SK ASC ASQ]
+     Description                              number   (hours)
+# 1  Background short  Completed                   -   22960                 - [-   -    -]
+# 2  Background short  Completed                   -   22792                 - [-   -    -]
+# 3  Background short  Completed                   -   22673                 - [-   -    -]
+# 4  Background short  Completed                   -   22649                 - [-   -    -]
+# 5  Background short  Completed                   -   22625                 - [-   -    -]
+# 6  Background short  Completed                   -   22607                 - [-   -    -]
+# 7  Background short  Completed                   -   22583                 - [-   -    -]
+# 8  Background short  Completed                   -   22559                 - [-   -    -]
+# 9  Background short  Completed                   -   22535                 - [-   -    -]
+#10  Background long   Completed                   -   22513                 - [-   -    -]
+#11  Background short  Completed                   -   22511                 - [-   -    -]
+#12  Background short  Completed                   -   22487                 - [-   -    -]
+#13  Background short  Completed                   -   22463                 - [-   -    -]
+#14  Background short  Completed                   -   22439                 - [-   -    -]
+#15  Background short  Completed                   -   22415                 - [-   -    -]
+#16  Background short  Completed                   -   22391                 - [-   -    -]
+#17  Background short  Completed                   -   22367                 - [-   -    -]
+#18  Background short  Completed                   -   22343                 - [-   -    -]
+#19  Background short  Completed                   -   22319                 - [-   -    -]
+#20  Background short  Completed                   -   22295                 - [-   -    -]
+
+Long (extended) Self-test duration: 3600 seconds [60.0 minutes]
+
+
+------------------------------------------------------

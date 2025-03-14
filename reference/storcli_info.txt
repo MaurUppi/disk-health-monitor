@@ -1,0 +1,84 @@
+root@TrueNAS[~]# storcli /c0 show
+CLI Version = 007.2807.0000.0000 Dec 22, 2023
+Operating system = Linux 6.6.44-production+truenas
+Controller = 0
+Status = Success
+Description = None
+
+Product Name = HBA 9400-16i
+Serial Number = SP81928512
+SAS Address =  500605b00dd9c7b0
+PCI Address = 00:03:00:00
+System Time = 03/03/2025 12:48:42
+FW Package Build = 24.00.00.00
+FW Version = 24.00.00.00
+BIOS Version = 09.47.00.00_24.00.00.00
+NVDATA Version = 24.00.00.24
+PSOC FW Version = 0x0001
+PSOC Part Number = 05689
+Driver Name = mpt3sas
+Driver Version = 43.100.00.00
+Bus Number = 3
+Device Number = 0
+Function Number = 0
+Domain ID = 0
+Vendor Id = 0x1000
+Device Id = 0xAC
+SubVendor Id = 0x1000
+SubDevice Id = 0x3000
+Board Name = HBA 9400-16i
+Board Assembly = 03-50008-15005
+Board Tracer Number = SP81928512
+Security Protocol = None
+Physical Drives = 14
+
+PD LIST :
+=======
+
+-------------------------------------------------------------------------
+EID:Slt DID State DG       Size Intf Med SED PI SeSz Model            Sp
+-------------------------------------------------------------------------
+0:2       7 JBOD  -    3.492 TB SAS  SSD -   -  512B PA33N3T8 EMC3840 -
+0:3       6 JBOD  -    3.492 TB SAS  SSD -   -  512B X356_S16333T8ATE -
+0:4       3 JBOD  -    3.492 TB SAS  SSD -   -  512B MZILT3T8HALS/007 -
+0:5      11 JBOD  -    3.492 TB SAS  SSD -   -  512B MZILT3T8HALS/007 -
+0:6      12 JBOD  -    3.492 TB SAS  SSD -   -  512B MZILT3T8HALS/007 -
+0:7      14 JBOD  -    3.492 TB SAS  SSD -   -  512B MZILT3T8HALS/007 -
+0:8       8 JBOD  -   13.971 TB SAS  SSD -   -  512B MZILT15THALA/007 -
+0:9       9 JBOD  -   13.969 TB SAS  SSD -   -  512B ARFX15T4S5xnNTRI -
+0:10      4 JBOD  -   13.686 TB SAS  SSD -   -  512B KPM615T4S5xnFTRI -
+0:11      5 JBOD  -   13.686 TB SAS  SSD -   -  512B KPM615T4S5xnFTRI -
+0:12      1 JBOD  -  558.911 GB SAS  HDD -   -  512B ST600MM0006      -
+0:13      2 JBOD  -  558.911 GB SAS  HDD -   -  512B ST600MM0006      -
+0:14     10 JBOD  -  372.611 GB SAS  SSD -   -  512B MO0400JFFCF      -
+0:15     13 JBOD  -  372.611 GB SAS  SSD -   -  512B MO0400JFFCF      -
+-------------------------------------------------------------------------
+
+EID-Enclosure Device ID|Slt-Slot No|DID-Device ID|DG-DriveGroup
+UGood-Unconfigured Good|UBad-Unconfigured Bad|Intf-Interface
+Med-Media Type|SED-Self Encryptive Drive|PI-Protection Info
+SeSz-Sector Size|Sp-Spun|U-Up|D-Down|T-Transition
+
+Requested Boot Drive = Not Set
+
+------------------------------------------------------------------------------
+root@TrueNAS[~]# storcli show
+CLI Version = 007.2807.0000.0000 Dec 22, 2023
+Operating system = Linux 6.6.44-production+truenas
+Status Code = 0
+Status = Success
+Description = None
+
+Number of Controllers = 1
+Host Name = TrueNAS
+Operating System  = Linux 6.6.44-production+truenas
+StoreLib IT Version = 07.2900.0200.0100
+
+IT System Overview :
+==================
+
+---------------------------------------------------------------------------
+Ctl Model        AdapterType   VendId DevId SubVendId SubDevId PCI Address
+---------------------------------------------------------------------------
+  0 HBA 9400-16i   SAS3416(B0) 0x1000  0xAC    0x1000   0x3000 00:03:00:00
+---------------------------------------------------------------------------

@@ -1,0 +1,7 @@
+lspci | grep -i "non-volatile memory"
+02:01.0 Non-Volatile memory controller: VMware NVMe SSD Controller
+03:02.0 Non-Volatile memory controller: Intel Corporation NVMe Datacenter SSD [3DNAND, Beta Rock Controller]
+03:03.0 Non-Volatile memory controller: Western Digital Ultrastar DC SN640 NVMe SSD
+03:04.0 Non-Volatile memory controller: Western Digital Ultrastar DC SN640 NVMe SSD
+03:05.0 Non-Volatile memory controller: Intel Corporation NVMe DC SSD [3DNAND, Sentinel Rock Controller]
+03:06.0 Non-Volatile memory controller: Intel Corporation NVMe DC SSD [3DNAND, Sentinel Rock Controller]

@@ -11,10 +11,12 @@ GOVET=$(GOCMD) vet
 
 # Build parameters
 BINARY_NAME=disk-health-monitor
-MAIN_PACKAGE=./cmd/monitor
+MAIN_PACKAGE=.  # 修改为指向根目录
 VERSION=$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 BUILD_DATE=$(shell date -u '+%Y-%m-%d %H:%M:%S')
 LDFLAGS=-ldflags "-X main.Version=$(VERSION) -X 'main.BuildDate=$(BUILD_DATE)'"
+
+# 其余内容保持不变
 
 # Output directories
 BIN_DIR=bin

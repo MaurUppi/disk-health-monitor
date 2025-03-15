@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/MaurUppi/disk-health-monitor/internal/model"
@@ -14,10 +15,11 @@ import (
 
 // Default option values
 const (
-	DefaultBorderStyle = BorderStyleClassic
-	DefaultMaxWidth    = 120
-	DefaultCompactMode = false
-	DefaultColorOutput = true
+	DefaultBorderStyle   = BorderStyleClassic
+	DefaultMaxWidth      = 120
+	DefaultCompactMode   = false
+	DefaultColorOutput   = true
+	OptionShowIncrements = "show_increments" // 是否显示增量数据
 )
 
 // TextFormatter implements the OutputFormatter interface for text output
@@ -157,20 +159,53 @@ func (tf *TextFormatter) FormatControllerInfo(controllerData *model.ControllerDa
 }
 
 // SaveToFile saves the formatted output to a file
+// SaveToFile saves the formatted output to a file
 func (tf *TextFormatter) SaveToFile(filename string) error {
-	// Ensure directory exists
+	// 确保目录存在
 	if err := tf.EnsureDirectoryExists(filename); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	// Check if buffer has content
+	// 检查缓冲区是否有内容
 	if tf.buffer.Len() == 0 {
 		return fmt.Errorf("no content to save to file")
 	}
 
-	// Write to file with proper flushing
-	content := tf.buffer.String()
-	err := os.WriteFile(filename, []byte(content), 0644)
+	// 保存当前颜色设置
+	prevColorSetting := tf.GetBoolOption(OptionColorOutput, true)
+
+	// 禁用颜色
+	tf.SetOption(OptionColorOutput, false)
+
+	// 保存原始内容
+	oldContent := tf.buffer.String()
+	tf.buffer.Reset()
+
+	// 重新生成不带颜色的内容
+	if tf.diskData != nil {
+		tf.FormatDiskInfo(tf.diskData)
+	}
+	if tf.controllerData != nil {
+		tf.FormatControllerInfo(tf.controllerData)
+	}
+
+	// 检查重新生成的内容是否为空
+	if tf.buffer.Len() == 0 {
+		// 恢复原始内容和颜色设置
+		tf.buffer.WriteString(oldContent)
+		tf.SetOption(OptionColorOutput, prevColorSetting)
+		return fmt.Errorf("failed to regenerate content without colors")
+	}
+
+	// 获取无颜色版本并写入文件
+	noColorContent := tf.buffer.String()
+	err := os.WriteFile(filename, []byte(noColorContent), 0644)
+
+	// 恢复原始内容和颜色设置
+	tf.buffer.Reset()
+	tf.buffer.WriteString(oldContent)
+	tf.SetOption(OptionColorOutput, prevColorSetting)
+
 	if err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
@@ -363,10 +398,11 @@ func (tf *TextFormatter) writeTableForDiskType(diskType model.DiskType, disks []
 		headers = append(headers, attr.DisplayName)
 	}
 
-	// Add increment columns if available
-	if tf.diskData.HasPreviousData() && !tf.GetBoolOption(OptionCompactMode, false) {
-		headers = append(headers, "读增量", "写增量")
-	}
+	// Add increment columns if available and enabled
+	//if tf.diskData.HasPreviousData() && !tf.GetBoolOption(OptionCompactMode, false) &&
+	//	tf.GetBoolOption(OptionShowIncrements, false) { // 默认不显示增量
+	//	headers = append(headers, "读增量", "写增量")
+	//}
 
 	table.SetHeader(headers)
 
@@ -376,9 +412,13 @@ func (tf *TextFormatter) writeTableForDiskType(diskType model.DiskType, disks []
 
 		// Add base columns
 		if tf.GetBoolOption(OptionCompactMode, false) {
-			row = []string{disk.Name, disk.Size, disk.Pool}
+			// 格式化容量值
+			formattedSize := tf.formatDiskSize(disk.Size)
+			row = []string{disk.Name, formattedSize, disk.Pool}
 		} else {
-			row = []string{disk.Name, disk.Model, disk.Size, disk.Pool}
+			// 格式化容量值
+			formattedSize := tf.formatDiskSize(disk.Size)
+			row = []string{disk.Name, disk.Model, formattedSize, disk.Pool}
 		}
 
 		// Add attribute values
@@ -408,9 +448,10 @@ func (tf *TextFormatter) writeTableForDiskType(diskType model.DiskType, disks []
 		}
 
 		// Add increment values if available
-		if tf.diskData.HasPreviousData() && !tf.GetBoolOption(OptionCompactMode, false) {
-			row = append(row, disk.ReadIncrement, disk.WriteIncrement)
-		}
+		//if tf.diskData.HasPreviousData() && !tf.GetBoolOption(OptionCompactMode, false) &&
+		//	tf.GetBoolOption(OptionShowIncrements, false) { // 默认不显示增量
+		//	row = append(row, disk.ReadIncrement, disk.WriteIncrement)
+		//}
 
 		table.Append(row)
 	}
@@ -582,6 +623,33 @@ func (tf *TextFormatter) renderTable(table *tablewriter.Table) {
 	tf.buffer.WriteString("\n")
 }
 
+// formatDiskSize 格式化磁盘容量为人类可读格式
+func (tf *TextFormatter) formatDiskSize(sizeStr string) string {
+	// 尝试将科学计数法转换为浮点数
+	size, err := strconv.ParseFloat(sizeStr, 64)
+	if err != nil {
+		return sizeStr // 如果解析失败，返回原始字符串
+	}
+
+	// 使用与smart.go中类似的逻辑格式化容量
+	units := []string{"B", "KB", "MB", "GB", "TB", "PB"}
+	unitIndex := 0
+
+	for size >= 1024 && unitIndex < len(units)-1 {
+		size /= 1024
+		unitIndex++
+	}
+
+	// 根据大小值和单位格式化输出
+	if size < 10 {
+		return fmt.Sprintf("%.2f %s", size, units[unitIndex])
+	} else if size < 100 {
+		return fmt.Sprintf("%.1f %s", size, units[unitIndex])
+	} else {
+		return fmt.Sprintf("%.0f %s", size, units[unitIndex])
+	}
+}
+
 // colorizeText applies ANSI color to text if color output is enabled
 func colorizeText(text string, color string) string {
 	// ANSI color codes
@@ -663,6 +731,7 @@ func init() {
 		formatter.SetOption(OptionGroupByType, true)
 		formatter.SetOption(OptionIncludeSummary, true)
 		formatter.SetOption(OptionIncludeTimestamp, true)
+		formatter.SetOption(OptionShowIncrements, false) // 默认不显示增量数据
 
 		// Override with provided options
 		if options != nil {

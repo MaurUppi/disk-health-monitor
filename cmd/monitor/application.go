@@ -223,6 +223,13 @@ func (app *Application) generateOutput(diskData *model.DiskData, ctrlData *model
 			return fmt.Errorf("controller formatting failed: %w", err)
 		}
 	} else {
+		// Format disk data if available
+		if diskData != nil {
+			if err := formatter.FormatDiskInfo(diskData); err != nil {
+				app.Logger.Error("Failed to format disk information: %v", err)
+			}
+		}
+
 		// Format controller data if available
 		if ctrlData != nil && !app.Config.NoController {
 			if err := formatter.FormatControllerInfo(ctrlData); err != nil {
@@ -230,12 +237,6 @@ func (app *Application) generateOutput(diskData *model.DiskData, ctrlData *model
 			}
 		}
 
-		// Format disk data if available
-		if diskData != nil {
-			if err := formatter.FormatDiskInfo(diskData); err != nil {
-				app.Logger.Error("Failed to format disk information: %v", err)
-			}
-		}
 	}
 
 	// Verify buffer has content

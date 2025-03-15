@@ -70,7 +70,7 @@ func NewDefaultConfig() *Config {
 		LogDir:         defaultLogDir,
 		NoGroup:        false,
 		NoController:   false,
-		ControllerOnly: false,
+		ControllerOnly: true,
 		OutputFile:     "",
 		OutputFormat:   OutputFormatText,
 		DataFile:       defaultDataFile,

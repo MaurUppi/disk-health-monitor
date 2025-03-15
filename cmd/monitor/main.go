@@ -41,7 +41,7 @@ func main() {
 func parseFlags() (*model.Config, map[string]interface{}, error) {
 	// Reset flag parsing
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	
+
 	// Create default config
 	config := model.NewDefaultConfig()
 
@@ -98,19 +98,21 @@ func parseFlags() (*model.Config, map[string]interface{}, error) {
 	// Apply flags to config
 	config.Debug = *debug || *flagD
 	config.Verbose = *verbose
-	
+
 	if *output != "" {
 		config.OutputFile = *output
 	} else if *flagO != "" {
 		config.OutputFile = *flagO
 	}
-	
+
 	if *format != "" {
 		switch *format {
 		case "text", "txt":
 			config.OutputFormat = model.OutputFormatText
 		case "pdf":
 			config.OutputFormat = model.OutputFormatPDF
+		case "html":
+			config.OutputFormat = model.OutputFormatHTML
 		default:
 			return nil, nil, fmt.Errorf("不支持的输出格式: %s", *format)
 		}
@@ -120,19 +122,21 @@ func parseFlags() (*model.Config, map[string]interface{}, error) {
 			config.OutputFormat = model.OutputFormatText
 		case "pdf":
 			config.OutputFormat = model.OutputFormatPDF
+		case "html":
+			config.OutputFormat = model.OutputFormatHTML
 		default:
 			return nil, nil, fmt.Errorf("不支持的输出格式: %s", *flagF)
 		}
 	}
-	
+
 	if *dataFile != "" {
 		config.DataFile = *dataFile
 	}
-	
+
 	if *logFile != "" {
 		config.LogFile = *logFile
 	}
-	
+
 	config.NoGroup = *noGroup
 	config.NoController = *noController
 	config.ControllerOnly = *controllerOnly
@@ -171,7 +175,7 @@ func printHelp() {
 
   输出选项:
     -o, --output FILE      输出到指定文件
-    -f, --format FORMAT    指定输出格式 (text, pdf)
+    -f, --format FORMAT    指定输出格式 (text, html)
     --quiet                静默模式，减少屏幕输出
 
   显示选项:

@@ -17,6 +17,8 @@ const (
 	OutputFormatText OutputFormat = "text"
 	// OutputFormatJSON JSON格式输出
 	OutputFormatJSON OutputFormat = "json"
+	// OutputFormatHTML HTML格式输出
+	OutputFormatHTML OutputFormat = "html"
 )
 
 // Config 应用配置
@@ -91,7 +93,7 @@ func (c *Config) Validate() error {
 
 	// 验证输出格式
 	switch c.OutputFormat {
-	case OutputFormatPDF, OutputFormatText, OutputFormatJSON:
+	case OutputFormatPDF, OutputFormatText, OutputFormatJSON, OutputFormatHTML:
 		// 有效的格式
 	default:
 		return fmt.Errorf("不支持的输出格式: %s", c.OutputFormat)
@@ -136,5 +138,7 @@ func (c *Config) SetupOutputFile() {
 		c.OutputFile = fmt.Sprintf("disk_health_%s.txt", timeStr)
 	case OutputFormatJSON:
 		c.OutputFile = fmt.Sprintf("disk_health_%s.json", timeStr)
+	case OutputFormatHTML:
+		c.OutputFile = fmt.Sprintf("disk_health_%s.html", timeStr)
 	}
 }

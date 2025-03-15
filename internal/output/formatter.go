@@ -60,6 +60,11 @@ const (
 	OptionOrientation  = "orientation"   // 方向
 	OptionIncludeCover = "include_cover" // 是否包含封面
 	OptionFontSize     = "font_size"     // 字体大小
+
+	// HTML格式特定选项
+	OptionTemperatureBar      = "temperature_bar"      // 显示视觉温度指示器
+	OptionEnableInteractivity = "enable_interactivity" // 启用交互式功能（排序、过滤）
+	OptionHtmlTitle           = "html_title"           // HTML页面标题
 )
 
 // 边框样式常量
@@ -312,13 +317,44 @@ func NewFormatter(format string, options map[string]interface{}) (OutputFormatte
 		return nil, fmt.Errorf("PDF格式输出暂未实现，请使用文本格式输出")
 	case "text", "txt", "t":
 		return NewTextFormatter(options), nil
+	case "html", "h":
+		return NewHTMLFormatter(options), nil
 	default:
 		return nil, fmt.Errorf("不支持的输出格式: %s", format)
 	}
+}
+
+// FormatSciNotation 将科学计数法转换为人类可读格式
+func FormatSciNotation(size string) string {
+	// 尝试解析为科学计数法
+	var value float64
+	if _, err := fmt.Sscanf(size, "%e", &value); err == nil {
+		// 转换为适当的单位
+		units := []string{"B", "KB", "MB", "GB", "TB", "PB"}
+		unitIndex := 0
+
+		for value >= 1024 && unitIndex < len(units)-1 {
+			value /= 1024
+			unitIndex++
+		}
+
+		// 根据数值大小选择合适的精度
+		if value < 10 {
+			return fmt.Sprintf("%.2f %s", value, units[unitIndex])
+		} else if value < 100 {
+			return fmt.Sprintf("%.1f %s", value, units[unitIndex])
+		} else {
+			return fmt.Sprintf("%.0f %s", value, units[unitIndex])
+		}
+	}
+
+	// 如果不是科学计数法，返回原始值
+	return size
 }
 
 // 这些是将在各个具体格式化器中实现的函数声明
 var (
 	NewPDFFormatter  func(options map[string]interface{}) OutputFormatter
 	NewTextFormatter func(options map[string]interface{}) OutputFormatter
+	NewHTMLFormatter func(options map[string]interface{}) OutputFormatter
 )

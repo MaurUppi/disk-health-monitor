@@ -73,6 +73,7 @@ Options:
 
   Output options:
     -o, --output FILE      Save output to specified file
+    -f, --format FORMAT    Report format (text, html)
     --compact              Use compact mode (fewer columns)
     --quiet                Quiet mode, reduce screen output
 
@@ -228,6 +229,7 @@ sudo mv disk-health-monitor /usr/local/bin/
 
   输出选项:
     -o, --output 文件名    将输出保存到指定文件
+    -f, --format FORMAT    指定输出格式 (text, html)
     --compact              使用紧凑模式（减少显示列数）
     --quiet                安静模式，减少屏幕输出
 

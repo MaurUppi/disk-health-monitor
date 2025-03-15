@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -129,7 +130,7 @@ func (s *DiskHistoryStorage) LoadDiskData() (map[string]map[string]string, strin
 	if historyData.Version != "1.0" {
 		s.logger.Info("Data format version %s detected, migrating to current version", historyData.Version)
 		historyData = s.migrateDataFormat(historyData)
-		
+
 		// Save migrated data back to file
 		jsonData, err := json.MarshalIndent(historyData, "", "  ")
 		if err != nil {
@@ -150,7 +151,7 @@ func (s *DiskHistoryStorage) LoadDiskData() (map[string]map[string]string, strin
 
 // attemptRecovery tries to recover data from a backup if the main file is corrupted
 func (s *DiskHistoryStorage) attemptRecovery(originalErr error) (map[string]map[string]string, string, error) {
-	    s.logger.Error("Data file corrupt, attempting recovery from backup: %v", originalErr)
+	s.logger.Error("Data file corrupt, attempting recovery from backup: %v", originalErr)
 
 	// Find backup files
 	pattern := s.path + ".*.bak"
@@ -209,7 +210,7 @@ func (s *DiskHistoryStorage) migrateDataFormat(oldData HistoryData) HistoryData 
 		return s.migrateFrom02To10(oldData)
 	default:
 		// Unknown version, try compatible handling
-		        s.logger.Error("Unknown data version: %s, attempting compatible handling", oldData.Version)
+		s.logger.Error("Unknown data version: %s, attempting compatible handling", oldData.Version)
 		// Set the version to current
 		oldData.Version = "1.0"
 		return oldData
@@ -227,7 +228,7 @@ func (s *DiskHistoryStorage) migrateFrom01To10(oldData HistoryData) HistoryData 
 	}
 
 	// If there were specific changes between 0.1 and 1.0, handle them here
-	
+
 	return newData
 }
 
@@ -242,7 +243,7 @@ func (s *DiskHistoryStorage) migrateFrom02To10(oldData HistoryData) HistoryData 
 	}
 
 	// If there were specific changes between 0.2 and 1.0, handle them here
-	
+
 	return newData
 }
 
@@ -299,7 +300,7 @@ func (s *DiskHistoryStorage) rotateBackups(keep int) error {
 	// Remove oldest backups beyond the keep limit
 	for i := 0; i < len(backups)-keep; i++ {
 		if err := os.Remove(backups[i]); err != nil {
-			            s.logger.Error("Failed to remove old backup %s: %v", backups[i], err)
+			s.logger.Error("Failed to remove old backup %s: %v", backups[i], err)
 			// Continue with other backups despite this error
 		} else {
 			s.logger.Debug("Removed old backup %s", backups[i])
@@ -336,49 +337,49 @@ func (s *DiskHistoryStorage) VerifyIntegrity() (bool, error) {
 func (s *DiskHistoryStorage) CalculateIncrements(oldData, newData map[string]string) map[string]string {
 	increments := make(map[string]string)
 
-	// Process read/write data increments
+	// 处理读写数据增量
 	for _, key := range []string{"Data_Read", "Data_Written"} {
 		newValue, newExists := newData[key]
 		oldValue, oldExists := oldData[key]
 
-		// Check if both data points exist
+		// 检查两个数据点是否都存在
 		if !newExists || !oldExists {
 			increments[key+"_Increment"] = "N/A"
 			continue
 		}
 
-		// Parse to bytes
+		// 解析为字节数
 		newBytes, newErr := s.parseStorageSizeToBytes(newValue)
 		oldBytes, oldErr := s.parseStorageSizeToBytes(oldValue)
 
-		// Check parsing errors
+		// 检查解析错误
 		if newErr != nil || oldErr != nil {
 			s.logger.Debug("Parse error calculating increment for %s: old=%s, new=%s", key, oldValue, newValue)
 			increments[key+"_Increment"] = "N/A"
 			continue
 		}
 
-		// Calculate difference
+		// 计算差值
 		if newBytes >= oldBytes {
-			// Normal case - new value is greater than or equal to old value
+			// 正常情况 - 新值大于等于旧值
 			diffBytes := newBytes - oldBytes
 			increments[key+"_Increment"] = s.formatBytes(diffBytes)
 		} else {
-			// Device might have been reset or replaced
-			increments[key+"_Increment"] = "Reset"
+			// 可能是设备重置或更换
+			increments[key+"_Increment"] = "重置"
 		}
 	}
 
 	return increments
 }
 
-// parseStorageSizeToBytes converts a storage size string (like "1.5 TB") to bytes
+// 解析存储大小为字节数
 func (s *DiskHistoryStorage) parseStorageSizeToBytes(sizeStr string) (float64, error) {
 	if sizeStr == "" || sizeStr == "N/A" {
 		return 0, fmt.Errorf("invalid size string: %s", sizeStr)
 	}
 
-	// Extract number and unit using regex
+	// 使用正则表达式提取数字和单位
 	re := regexp.MustCompile(`(\d+\.?\d*)\s*([KMGTP]?B)`)
 	matches := re.FindStringSubmatch(sizeStr)
 	if len(matches) != 3 {
@@ -388,13 +389,13 @@ func (s *DiskHistoryStorage) parseStorageSizeToBytes(sizeStr string) (float64, e
 	valueStr := matches[1]
 	unit := matches[2]
 
-	// Parse numeric value
+	// 解析数字值
 	value, err := strconv.ParseFloat(valueStr, 64)
 	if err != nil {
 		return 0, fmt.Errorf("invalid numeric value: %s", valueStr)
 	}
 
-	// Convert to bytes based on unit
+	// 转换为字节数
 	var bytes float64
 	switch strings.ToUpper(unit) {
 	case "B":
@@ -416,21 +417,19 @@ func (s *DiskHistoryStorage) parseStorageSizeToBytes(sizeStr string) (float64, e
 	return bytes, nil
 }
 
-// formatBytes formats bytes into a human-readable string with appropriate units
+// 格式化字节为可读字符串
 func (s *DiskHistoryStorage) formatBytes(bytes float64) string {
 	const unit = 1024.0
+	sizes := []string{"B", "KB", "MB", "GB", "TB", "PB"}
+
 	if bytes < unit {
 		return fmt.Sprintf("%.2f B", bytes)
 	}
 
-	div, exp := unit, 0
+	exp := 0
 	for n := bytes / unit; n >= unit; n /= unit {
-		div *= unit
 		exp++
 	}
 
-	sizes := []string{"KB", "MB", "GB", "TB", "PB"}
-	return fmt.Sprintf("%.2f %s", bytes/div, sizes[exp])
+	return fmt.Sprintf("%.2f %s", bytes/math.Pow(unit, float64(exp)), sizes[exp])
 }
-
-// Since we're not using this method anymore, we can remove it

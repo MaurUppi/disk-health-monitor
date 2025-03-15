@@ -84,7 +84,7 @@ func getBoolOption(options map[string]interface{}, key string, defaultValue bool
 	if options == nil {
 		return defaultValue
 	}
-	
+
 	if val, ok := options[key]; ok {
 		if boolVal, ok := val.(bool); ok {
 			return boolVal
@@ -206,7 +206,7 @@ func (app *Application) generateOutput(diskData *model.DiskData, ctrlData *model
 	// Determine output format
 	format := string(app.Config.OutputFormat)
 
-	// Get formatter options using our helper function
+	// Get formatter options
 	options := formatFormatterOptions(app)
 
 	// Create formatter
@@ -215,11 +215,13 @@ func (app *Application) generateOutput(diskData *model.DiskData, ctrlData *model
 		return fmt.Errorf("failed to create output formatter: %w", err)
 	}
 
-	// Set both data sources in one call if supported
-	if setter, ok := formatter.(interface {
-		SetData(*model.DiskData, *model.ControllerData)
-	}); ok {
-		setter.SetData(diskData, ctrlData)
+	// Set data in formatter
+	if app.Config.ControllerOnly {
+		// Special handling for controller-only mode
+		if err := formatter.FormatControllerInfo(ctrlData); err != nil {
+			app.Logger.Error("Failed to format controller information: %v", err)
+			return fmt.Errorf("controller formatting failed: %w", err)
+		}
 	} else {
 		// Format controller data if available
 		if ctrlData != nil && !app.Config.NoController {
@@ -236,6 +238,33 @@ func (app *Application) generateOutput(diskData *model.DiskData, ctrlData *model
 		}
 	}
 
+	// Verify buffer has content
+	if textFormatter, ok := formatter.(fmt.Stringer); ok {
+		if len(textFormatter.String()) == 0 {
+			app.Logger.Error("Formatter produced empty output")
+			return fmt.Errorf("empty output generated")
+		}
+	}
+
+	if app.Config.Debug {
+		if ctrlData != nil {
+			app.Logger.Debug("Controller Data: LSI=%d, NVMe=%d",
+				len(ctrlData.LSIControllers),
+				len(ctrlData.NVMeControllers))
+		}
+		if textFormatter, ok := formatter.(fmt.Stringer); ok {
+			output := textFormatter.String()
+			app.Logger.Debug("Formatted Output Length: %d bytes", len(output))
+			if len(output) < 100 {
+				app.Logger.Debug("Formatted Output: %s", output)
+			} else if len(output) == 0 {
+				app.Logger.Debug("WARNING: Output is empty!")
+			}
+		} else {
+			app.Logger.Debug("Formatter doesn't implement Stringer interface")
+		}
+	}
+
 	// Save to file if output file is specified
 	if app.Config.OutputFile != "" {
 		if err := formatter.SaveToFile(app.Config.OutputFile); err != nil {
@@ -247,29 +276,14 @@ func (app *Application) generateOutput(diskData *model.DiskData, ctrlData *model
 		}
 		app.Logger.Info("Output saved to %s", app.Config.OutputFile)
 	} else {
-		// Print to console if no output file is specified and not in quiet mode
+		// Print to console if no output file is specified
 		if !app.Quiet {
 			if textFormatter, ok := formatter.(fmt.Stringer); ok {
-				output := textFormatter.String()
-
-				// If output is large, maybe add a pagination system here
-				// For now, just print directly
-				fmt.Println(output)
+				fmt.Println(textFormatter.String())
 			} else {
-				// Fallback to simple output if String() not implemented
+				// Fallback to simple output
 				fmt.Println("Data collection complete.")
-				if diskData != nil {
-					fmt.Printf("Found %d disks (SSD: %d, HDD: %d)\n",
-						diskData.GetDiskCount(),
-						diskData.GetSSDCount(),
-						diskData.GetHDDCount())
-				}
-				if ctrlData != nil {
-					fmt.Printf("Found %d controllers (LSI: %d, NVMe: %d)\n",
-						ctrlData.GetTotalControllerCount(),
-						ctrlData.GetLSIControllerCount(),
-						ctrlData.GetNVMeControllerCount())
-				}
+				// Print summary information
 			}
 		}
 	}

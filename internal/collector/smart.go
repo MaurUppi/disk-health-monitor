@@ -3,6 +3,7 @@ package collector
 import (
 	"context"
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -302,25 +303,78 @@ func (s *SMARTCollector) getSATASmartData(ctx context.Context, diskName, diskTyp
 
 // normalizeSize 将大小字符串标准化为合适的单位
 func (s *SMARTCollector) normalizeSize(sizeStr string) string {
+	// 添加调试日志记录
+	s.logger.Debug("开始处理大小字符串: %s", sizeStr)
+
 	if sizeStr == "" {
+		s.logger.Debug("输入字符串为空")
 		return ""
 	}
+
+	// 先处理科学计数法的容量
+	if match, _ := regexp.MatchString(`^\d+\.\d+e[+-]\d+$`, sizeStr); match {
+		value, err := strconv.ParseFloat(sizeStr, 64)
+		if err == nil {
+			// 直接转换为 TB
+			tbValue := value / (1024 * 1024 * 1024 * 1024)
+			result := fmt.Sprintf("%.2f TB", tbValue)
+			s.logger.Debug("科学计数法直接转换: %s", result)
+			return result
+		}
+	}
+
 	match := regexp.MustCompile(`(\d+\.?\d*)\s*([KMGTP]?B)`).FindStringSubmatch(sizeStr)
+
+	// 记录正则匹配结果
+	s.logger.Debug("正则匹配结果: %v", match)
+
 	if len(match) > 2 {
 		value, _ := strconv.ParseFloat(match[1], 64)
 		unit := strings.ToUpper(match[2])
-		var tbValue float64
+
+		// 记录解析的数值和单位
+		s.logger.Debug("解析的数值: %f, 单位: %s", value, unit)
+
+		// 转换为字节数
+		var bytes float64
 		switch unit {
+		case "B":
+			bytes = value
+		case "KB":
+			bytes = value * 1024
+		case "MB":
+			bytes = value * 1024 * 1024
 		case "GB":
-			// smartctl 的 Gigabytes 是 10^9 字节，转换为 TB 使用 1000
-			tbValue = value / 1000
+			bytes = value * 1024 * 1024 * 1024
 		case "TB":
-			tbValue = value
+			bytes = value * 1024 * 1024 * 1024 * 1024
+		case "PB":
+			bytes = value * 1024 * 1024 * 1024 * 1024 * 1024
 		default:
+			s.logger.Debug("未知单位: %s", unit)
 			return sizeStr
 		}
-		return fmt.Sprintf("%.2f TB", tbValue)
+
+		// 记录转换后的字节数
+		s.logger.Debug("转换后的字节数: %f", bytes)
+
+		result := s.formatSize(bytes)
+
+		// 记录最终结果
+		s.logger.Debug("最终转换结果: %s", result)
+
+		return result
 	}
+
+	// 如果正则匹配失败，尝试处理科学计数法
+	if value, err := strconv.ParseFloat(sizeStr, 64); err == nil {
+		s.logger.Debug("尝试处理科学计数法: %f", value)
+		result := s.formatSize(value)
+		s.logger.Debug("科学计数法转换结果: %s", result)
+		return result
+	}
+
+	s.logger.Debug("无法处理的大小字符串: %s", sizeStr)
 	return sizeStr
 }
 
@@ -330,10 +384,27 @@ func (s *SMARTCollector) formatSize(sizeBytes float64) string {
 	unitIndex := 0
 	size := sizeBytes
 
+	// 处理负数情况
+	sign := ""
+	if size < 0 {
+		sign = "-"
+		size = math.Abs(size)
+	}
+
 	for size >= 1024 && unitIndex < len(units)-1 {
 		size /= 1024
 		unitIndex++
 	}
 
-	return fmt.Sprintf("%.2f %s", size, units[unitIndex])
+	// 根据单位和大小选择最佳显示方式
+	switch units[unitIndex] {
+	case "B", "KB":
+		return fmt.Sprintf("%s%.2f %s", sign, size, units[unitIndex])
+	case "MB", "GB":
+		return fmt.Sprintf("%s%.2f %s", sign, size, units[unitIndex])
+	case "TB", "PB":
+		return fmt.Sprintf("%s%.2f %s", sign, size, units[unitIndex])
+	default:
+		return fmt.Sprintf("%s%.2f B", sign, size)
+	}
 }

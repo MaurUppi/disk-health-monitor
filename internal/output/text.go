@@ -54,12 +54,12 @@ func createTextFormatter(options map[string]interface{}) *TextFormatter {
 // GetSupportedOptions returns a map of supported options and their descriptions
 func (tf *TextFormatter) GetSupportedOptions() map[string]string {
 	return map[string]string{
-		OptionBorderStyle:    "Table border style (classic, simple, none)",
-		OptionMaxWidth:       "Maximum width for tables (0 for no limit)",
-		OptionCompactMode:    "Use compact mode with fewer columns",
-		OptionColorOutput:    "Use ANSI color codes for terminal output",
-		OptionGroupByType:    "Group disks by type",
-		OptionIncludeSummary: "Include summary information",
+		OptionBorderStyle:      "Table border style (classic, simple, none)",
+		OptionMaxWidth:         "Maximum width for tables (0 for no limit)",
+		OptionCompactMode:      "Use compact mode with fewer columns",
+		OptionColorOutput:      "Use ANSI color codes for terminal output",
+		OptionGroupByType:      "Group disks by type",
+		OptionIncludeSummary:   "Include summary information",
 		OptionIncludeTimestamp: "Include timestamp",
 	}
 }
@@ -126,7 +126,7 @@ func (tf *TextFormatter) FormatControllerInfo(controllerData *model.ControllerDa
 	// Save controller data
 	tf.controllerData = controllerData
 
-	// If this is called directly (without disk data), create a buffer
+	// Ensure we have a title when this is called directly
 	if tf.buffer.Len() == 0 {
 		// Add title
 		tf.writeTitle("TrueNAS控制器信息")
@@ -135,6 +135,12 @@ func (tf *TextFormatter) FormatControllerInfo(controllerData *model.ControllerDa
 		if tf.GetBoolOption(OptionIncludeTimestamp, true) {
 			tf.buffer.WriteString(fmt.Sprintf("生成时间: %s\n\n", tf.FormatTimestamp()))
 		}
+	}
+
+	// Force buffer reset when in controller-only mode
+	if tf.buffer.Len() == 0 {
+		tf.buffer.Reset()
+		tf.writeTitle("TrueNAS控制器信息")
 	}
 
 	// Add LSI controller section if any
@@ -157,8 +163,14 @@ func (tf *TextFormatter) SaveToFile(filename string) error {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	// Write to file
-	err := os.WriteFile(filename, []byte(tf.buffer.String()), 0644)
+	// Check if buffer has content
+	if tf.buffer.Len() == 0 {
+		return fmt.Errorf("no content to save to file")
+	}
+
+	// Write to file with proper flushing
+	content := tf.buffer.String()
+	err := os.WriteFile(filename, []byte(content), 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
@@ -190,10 +202,10 @@ func (tf *TextFormatter) writeSectionTitle(title string) {
 // writeSummary writes the summary section
 func (tf *TextFormatter) writeSummary() {
 	summary := tf.GetSummaryInfo()
-	
+
 	tf.buffer.WriteString("系统摘要:\n")
 	tf.buffer.WriteString(fmt.Sprintf("- 总磁盘数: %s", summary["TotalDisks"]))
-	
+
 	// Add SSD and HDD counts if available
 	if ssdCount, ok := summary["SSDCount"]; ok {
 		tf.buffer.WriteString(fmt.Sprintf(" (SSD: %s", ssdCount))
@@ -203,7 +215,7 @@ func (tf *TextFormatter) writeSummary() {
 		tf.buffer.WriteString(")")
 	}
 	tf.buffer.WriteString("\n")
-	
+
 	// Add warning and error counts
 	warningCount := summary["WarningCount"]
 	if warningCount != "0" {
@@ -211,19 +223,19 @@ func (tf *TextFormatter) writeSummary() {
 	} else {
 		tf.buffer.WriteString(fmt.Sprintf("- 警告数: %s\n", warningCount))
 	}
-	
+
 	errorCount := summary["ErrorCount"]
 	if errorCount != "0" {
 		tf.buffer.WriteString(fmt.Sprintf("- 错误数: %s\n", colorizeText(errorCount, "red")))
 	} else {
 		tf.buffer.WriteString(fmt.Sprintf("- 错误数: %s\n", errorCount))
 	}
-	
+
 	// Add controller count if available
 	if controllerCount, ok := summary["ControllerCount"]; ok {
 		tf.buffer.WriteString(fmt.Sprintf("- 控制器数: %s\n", controllerCount))
 	}
-	
+
 	tf.buffer.WriteString("\n")
 }
 
@@ -267,7 +279,7 @@ func (tf *TextFormatter) writeAllDisks() {
 
 	// Create a table with all necessary columns
 	table := tf.createTable()
-	
+
 	// Set header
 	if tf.GetBoolOption(OptionCompactMode, false) {
 		table.SetHeader([]string{"名称", "类型", "容量", "存储池", "温度", "通电时间", "状态"})
@@ -278,7 +290,7 @@ func (tf *TextFormatter) writeAllDisks() {
 	// Add rows for all disks
 	for _, disk := range tf.diskData.Disks {
 		var row []string
-		
+
 		if tf.GetBoolOption(OptionCompactMode, false) {
 			// Compact mode with fewer columns
 			row = []string{
@@ -305,7 +317,7 @@ func (tf *TextFormatter) writeAllDisks() {
 				disk.GetAttribute("Data_Written"),
 			}
 		}
-		
+
 		table.Append(row)
 	}
 
@@ -321,13 +333,13 @@ func (tf *TextFormatter) writeTableForDiskType(diskType model.DiskType, disks []
 
 	// Create a table
 	table := tf.createTable()
-	
+
 	// Get attributes for this disk type
 	attributes := tf.diskData.GetDiskAttributes(diskType)
-	
+
 	// Determine columns based on disk type and mode
 	var headers []string
-	
+
 	// Base columns for all disk types
 	if tf.GetBoolOption(OptionCompactMode, false) {
 		// Compact mode
@@ -336,52 +348,52 @@ func (tf *TextFormatter) writeTableForDiskType(diskType model.DiskType, disks []
 		// Full mode
 		headers = []string{"名称", "型号", "容量", "存储池"}
 	}
-	
+
 	// Add attribute columns based on disk type
 	for _, attr := range attributes {
 		// Skip some columns in compact mode
 		if tf.GetBoolOption(OptionCompactMode, false) {
-			if attr.Name != "Temperature" && 
-			   attr.Name != "Smart_Status" && 
-			   attr.Name != "Power_On_Hours" {
+			if attr.Name != "Temperature" &&
+				attr.Name != "Smart_Status" &&
+				attr.Name != "Power_On_Hours" {
 				continue
 			}
 		}
-		
+
 		headers = append(headers, attr.DisplayName)
 	}
-	
+
 	// Add increment columns if available
 	if tf.diskData.HasPreviousData() && !tf.GetBoolOption(OptionCompactMode, false) {
 		headers = append(headers, "读增量", "写增量")
 	}
-	
+
 	table.SetHeader(headers)
-	
+
 	// Add rows for each disk
 	for _, disk := range disks {
 		var row []string
-		
+
 		// Add base columns
 		if tf.GetBoolOption(OptionCompactMode, false) {
 			row = []string{disk.Name, disk.Size, disk.Pool}
 		} else {
 			row = []string{disk.Name, disk.Model, disk.Size, disk.Pool}
 		}
-		
+
 		// Add attribute values
 		for _, attr := range attributes {
 			// Skip some columns in compact mode
 			if tf.GetBoolOption(OptionCompactMode, false) {
-				if attr.Name != "Temperature" && 
-				   attr.Name != "Smart_Status" && 
-				   attr.Name != "Power_On_Hours" {
+				if attr.Name != "Temperature" &&
+					attr.Name != "Smart_Status" &&
+					attr.Name != "Power_On_Hours" {
 					continue
 				}
 			}
-			
+
 			value := disk.GetAttribute(attr.Name)
-			
+
 			// Format special values
 			switch attr.Name {
 			case "Temperature":
@@ -391,18 +403,18 @@ func (tf *TextFormatter) writeTableForDiskType(diskType model.DiskType, disks []
 			case "Smart_Status":
 				value = colorizeSMARTStatus(FormatSMARTStatus(value), tf.GetBoolOption(OptionColorOutput, true))
 			}
-			
+
 			row = append(row, value)
 		}
-		
+
 		// Add increment values if available
 		if tf.diskData.HasPreviousData() && !tf.GetBoolOption(OptionCompactMode, false) {
 			row = append(row, disk.ReadIncrement, disk.WriteIncrement)
 		}
-		
+
 		table.Append(row)
 	}
-	
+
 	// Render the table
 	tf.renderTable(table)
 }
@@ -417,17 +429,17 @@ func (tf *TextFormatter) writeIncrementTable() {
 
 	// Create a table
 	table := tf.createTable()
-	
+
 	// Set header
 	table.SetHeader([]string{"磁盘名称", "类型", "型号", "存储池", "当前读取总量", "读取增量", "当前写入总量", "写入增量"})
-	
+
 	// Add rows for disks with increment data
 	for _, disk := range tf.diskData.Disks {
 		// Skip disks without increment data
 		if disk.ReadIncrement == "" && disk.WriteIncrement == "" {
 			continue
 		}
-		
+
 		// Create row
 		row := []string{
 			disk.Name,
@@ -439,10 +451,10 @@ func (tf *TextFormatter) writeIncrementTable() {
 			disk.GetAttribute("Data_Written"),
 			disk.WriteIncrement,
 		}
-		
+
 		table.Append(row)
 	}
-	
+
 	// Render the table
 	tf.renderTable(table)
 }
@@ -457,18 +469,18 @@ func (tf *TextFormatter) writeLSIControllers() {
 
 	// Create a table
 	table := tf.createTable()
-	
+
 	// Set header
 	if tf.GetBoolOption(OptionCompactMode, false) {
 		table.SetHeader([]string{"控制器名称", "型号", "温度", "设备数", "状态"})
 	} else {
 		table.SetHeader([]string{"控制器名称", "型号", "固件版本", "驱动版本", "温度", "设备数", "状态"})
 	}
-	
+
 	// Add rows for each controller
 	for id, controller := range tf.controllerData.LSIControllers {
 		var row []string
-		
+
 		if tf.GetBoolOption(OptionCompactMode, false) {
 			row = []string{
 				id,
@@ -488,10 +500,10 @@ func (tf *TextFormatter) writeLSIControllers() {
 				colorizeControllerStatus(string(controller.Status), tf.GetBoolOption(OptionColorOutput, true)),
 			}
 		}
-		
+
 		table.Append(row)
 	}
-	
+
 	// Render the table
 	tf.renderTable(table)
 }
@@ -506,10 +518,10 @@ func (tf *TextFormatter) writeNVMeControllers() {
 
 	// Create a table
 	table := tf.createTable()
-	
+
 	// Set header
 	table.SetHeader([]string{"总线ID", "控制器描述", "温度"})
-	
+
 	// Add rows for each controller
 	for _, controller := range tf.controllerData.NVMeControllers {
 		row := []string{
@@ -517,10 +529,10 @@ func (tf *TextFormatter) writeNVMeControllers() {
 			controller.Description,
 			controller.GetDisplayTemperature(),
 		}
-		
+
 		table.Append(row)
 	}
-	
+
 	// Render the table
 	tf.renderTable(table)
 }
@@ -529,10 +541,10 @@ func (tf *TextFormatter) writeNVMeControllers() {
 func (tf *TextFormatter) createTable() *tablewriter.Table {
 	// Reset table buffer
 	tf.tableBuffer.Reset()
-	
+
 	// Create table writer
 	table := tablewriter.NewWriter(&tf.tableBuffer)
-	
+
 	// Set border style
 	switch tf.GetStringOption(OptionBorderStyle, DefaultBorderStyle) {
 	case BorderStyleClassic:
@@ -548,18 +560,18 @@ func (tf *TextFormatter) createTable() *tablewriter.Table {
 		table.SetColumnSeparator("  ")
 		table.SetRowSeparator("")
 	}
-	
+
 	// Common settings
 	table.SetAutoWrapText(false)
 	table.SetAutoFormatHeaders(true)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	
+
 	// Set max width if specified
 	// The tablewriter library doesn't directly support max width,
 	// so we'd need to calculate column widths manually if needed
 	// For now, this is handled through the table settings already applied
-	
+
 	return table
 }
 
@@ -579,12 +591,12 @@ func colorizeText(text string, color string) string {
 		colorGreen  = "\033[32m"
 		colorYellow = "\033[33m"
 	)
-	
+
 	// Return plain text if empty
 	if text == "" {
 		return ""
 	}
-	
+
 	// Apply color based on requested color
 	switch color {
 	case "red":
@@ -603,7 +615,7 @@ func colorizeSMARTStatus(status string, useColor bool) string {
 	if !useColor {
 		return status
 	}
-	
+
 	switch status {
 	case "正常":
 		return colorizeText(status, "green")
@@ -621,7 +633,7 @@ func colorizeControllerStatus(status string, useColor bool) string {
 	if !useColor {
 		return status
 	}
-	
+
 	switch status {
 	case "正常":
 		return colorizeText(status, "green")
@@ -642,7 +654,7 @@ func init() {
 			BaseFormatter: NewBaseFormatter(),
 			buffer:        &strings.Builder{},
 		}
-		
+
 		// Set default options
 		formatter.SetOption(OptionBorderStyle, DefaultBorderStyle)
 		formatter.SetOption(OptionMaxWidth, DefaultMaxWidth)
@@ -651,14 +663,14 @@ func init() {
 		formatter.SetOption(OptionGroupByType, true)
 		formatter.SetOption(OptionIncludeSummary, true)
 		formatter.SetOption(OptionIncludeTimestamp, true)
-		
+
 		// Override with provided options
 		if options != nil {
 			for name, value := range options {
 				formatter.SetOption(name, value)
 			}
 		}
-		
+
 		return formatter
 	}
 }

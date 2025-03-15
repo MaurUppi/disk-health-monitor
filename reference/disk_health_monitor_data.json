@@ -1,0 +1,85 @@
+{
+  "timestamp": "2025-03-12 21:08:00",
+  "disks": {
+    "nvme0n1": {
+      "Data_Read": "0.50 TB",
+      "Data_Written": "0.20 TB"
+    },
+    "nvme1n1": {
+      "Data_Read": "14.49 TB",
+      "Data_Written": "35.82 TB"
+    },
+    "nvme2n1": {
+      "Data_Read": "1.99 TB",
+      "Data_Written": "1.46 TB"
+    },
+    "nvme3n1": {
+      "Data_Read": "13.27 TB",
+      "Data_Written": "25.70 TB"
+    },
+    "nvme4n1": {
+      "Data_Read": "1.62 TB",
+      "Data_Written": "1.41 TB"
+    },
+    "nvme5n1": {
+      "Data_Read": "5.14 TB",
+      "Data_Written": "3.03 TB"
+    },
+    "sda": {
+      "Data_Read": "804.71 TB",
+      "Data_Written": "557.90 TB"
+    },
+    "sdb": {
+      "Data_Read": "137.51 TB",
+      "Data_Written": "261.01 TB"
+    },
+    "sdc": {
+      "Data_Read": "627.77 TB",
+      "Data_Written": "172.40 TB"
+    },
+    "sdd": {
+      "Data_Read": "252.41 TB",
+      "Data_Written": "165.41 TB"
+    },
+    "sde": {
+      "Data_Read": "64.51 TB",
+      "Data_Written": "15.32 TB"
+    },
+    "sdf": {
+      "Data_Read": "11.92 TB",
+      "Data_Written": "2.72 TB"
+    },
+    "sdg": {
+      "Data_Read": "12.00 TB",
+      "Data_Written": "2.85 TB"
+    },
+    "sdh": {
+      "Data_Read": "113.20 TB",
+      "Data_Written": "63.80 TB"
+    },
+    "sdi": {
+      "Data_Read": "0.02 TB",
+      "Data_Written": "0.05 TB"
+    },
+    "sdj": {
+      "Data_Read": "64.13 TB",
+      "Data_Written": "15.89 TB"
+    },
+    "sdk": {
+      "Data_Read": "157.61 TB",
+      "Data_Written": "67.49 TB"
+    },
+    "sdl": {
+      "Data_Read": "0.02 TB",
+      "Data_Written": "0.05 TB"
+    },
+    "sdm": {
+      "Data_Read": "63.58 TB",
+      "Data_Written": "17.12 TB"
+    },
+    "sdn": {
+      "Data_Read": "56.21 TB",
+      "Data_Written": "19.46 TB"
+    }
+  }
+}

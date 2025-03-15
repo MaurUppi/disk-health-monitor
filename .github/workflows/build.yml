@@ -1,0 +1,121 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+        
+    - name: Run tests
+      run: go test -v ./internal/...
+
+  build:
+    name: Build Binaries
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            suffix: ""
+          - os: linux
+            arch: arm64
+            suffix: ""
+          - os: windows
+            arch: amd64
+            suffix: ".exe"
+          - os: freebsd
+            arch: amd64
+            suffix: ""
+          
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+        
+    - name: Build for ${{ matrix.os }} / ${{ matrix.arch }}
+      env:
+        GOOS: ${{ matrix.os }}
+        GOARCH: ${{ matrix.arch }}
+      run: |
+        VERSION=$(echo $GITHUB_REF | cut -d / -f 3)
+        if [[ "$VERSION" == "" ]]; then
+          VERSION="dev"
+        fi
+        go build -v -ldflags "-X main.Version=$VERSION" -o disk-health-monitor${{ matrix.suffix }} .
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: disk-health-monitor-${{ matrix.os }}-${{ matrix.arch }}
+        path: disk-health-monitor${{ matrix.suffix }}
+        retention-days: 7
+
+  release:
+    name: Create Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Display structure of downloaded files
+      run: ls -R
+    
+    - name: Create release archives
+      run: |
+        mkdir -p release
+        VERSION=$(echo $GITHUB_REF | cut -d / -f 3)
+        
+        # Linux amd64
+        cp disk-health-monitor-linux-amd64/disk-health-monitor release/disk-health-monitor
+        chmod +x release/disk-health-monitor
+        tar -czf release/disk-health-monitor-${VERSION}-linux-amd64.tar.gz -C release disk-health-monitor
+        rm release/disk-health-monitor
+        
+        # Linux arm64
+        cp disk-health-monitor-linux-arm64/disk-health-monitor release/disk-health-monitor
+        chmod +x release/disk-health-monitor
+        tar -czf release/disk-health-monitor-${VERSION}-linux-arm64.tar.gz -C release disk-health-monitor
+        rm release/disk-health-monitor
+        
+        # FreeBSD amd64
+        cp disk-health-monitor-freebsd-amd64/disk-health-monitor release/disk-health-monitor
+        chmod +x release/disk-health-monitor
+        tar -czf release/disk-health-monitor-${VERSION}-freebsd-amd64.tar.gz -C release disk-health-monitor
+        rm release/disk-health-monitor
+        
+        # Windows amd64
+        cp disk-health-monitor-windows-amd64/disk-health-monitor.exe release/disk-health-monitor.exe
+        zip -j release/disk-health-monitor-${VERSION}-windows-amd64.zip release/disk-health-monitor.exe
+        rm release/disk-health-monitor.exe
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          release/disk-health-monitor-*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

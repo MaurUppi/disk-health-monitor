@@ -47,7 +47,7 @@ jobs:
         go build -v -ldflags "-X main.Version=$VERSION" -o disk-health-monitor${{ matrix.suffix }} .
     
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4  # Updated from v3 to v4
       with:
         name: disk-health-monitor-${{ matrix.os }}-${{ matrix.arch }}
         path: disk-health-monitor${{ matrix.suffix }}
@@ -62,8 +62,8 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
-    
+      uses: actions/download-artifact@v4  # Updated from v3 to v4
+      
     - name: Display structure of downloaded files
       run: ls -R
     

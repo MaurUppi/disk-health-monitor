@@ -3,7 +3,7 @@
 A Go-based tool for monitoring disk health status on TrueNAS systems, showing SMART health information in a well-organized tabular format.
 
 ![License](https://img.shields.io/github/license/MaurUppi/disk-health-monitor)
-![Go Version](https://img.shields.io/badge/Go-1.18%2B-blue)
+![Go Version](https://img.shields.io/badge/Go-1.21%2B-blue)
 
 ## Features
 
